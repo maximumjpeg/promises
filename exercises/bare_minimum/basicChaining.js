@@ -10,11 +10,43 @@
 
 var fs = require('fs');
 var Promise = require('bluebird');
+var request = require('needle');
 
 
 
 var fetchProfileAndWriteToFile = function(readFilePath, writeFilePath) {
-  // TODO
+  return new Promise((resolve, reject) => {
+    fs.readFile(readFilePath, 'utf8', (err, name) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(name.split('\n', 1)[0]);
+      }
+    });
+  })
+    .then(function(name) {
+      return new Promise((resolve, reject) => {
+        request.get('https://api.github.com/users/' + name, (err, response, body) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(body);
+          }
+        });
+      });
+    })
+    .then(function(body) {
+      return new Promise((resolve, reject) => {
+        fs.writeFile(writeFilePath, JSON.stringify(body), (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve('');
+          }
+        });
+      });
+    })
+    .catch(err => {throw (err);});
 };
 
 // Export these functions so we can test them
